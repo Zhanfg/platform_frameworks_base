@@ -1,0 +1,39 @@
+name: OP6 Integrated SystemUI Stability Source QA
+
+on:
+  push:
+    branches: ["fix/op6-systemui-nav-stability-integrated"]
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/moment/arc/**"
+      - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/**"
+      - "packages/SystemUI/src/com/android/systemui/statusbar/policy/Clock.java"
+      - "tools/qa/test_op6_systemui_nav_integration.py"
+      - ".github/workflows/op6-systemui-nav-integrated-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/moment/arc/**"
+      - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/**"
+      - "packages/SystemUI/src/com/android/systemui/statusbar/policy/Clock.java"
+      - "tools/qa/test_op6_systemui_nav_integration.py"
+      - ".github/workflows/op6-systemui-nav-integrated-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  source-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/src/com/android/systemui/moment/arc
+            packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java
+            packages/SystemUI/src/com/android/systemui/navigationbar/gestural/QuickswitchOrientedNavHandle.java
+            packages/SystemUI/src/com/android/systemui/statusbar/policy/Clock.java
+            tools/qa/test_op6_systemui_nav_integration.py
+          sparse-checkout-cone-mode: false
+      - name: Verify real integrated source paths
+        run: python3 -m unittest discover -s tools/qa -p "test_op6_systemui_nav_integration.py" -v
