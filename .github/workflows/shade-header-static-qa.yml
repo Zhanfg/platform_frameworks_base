@@ -1,0 +1,32 @@
+name: SystemUI Shade Header Static QA
+
+on:
+  push:
+    branches: ["fix/**"]
+    paths:
+      - "packages/SystemUI/res/layout/combined_qs_header.xml"
+      - "tools/qa/test_shade_header_compat.py"
+      - ".github/workflows/shade-header-static-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/res/layout/combined_qs_header.xml"
+      - "tools/qa/test_shade_header_compat.py"
+      - ".github/workflows/shade-header-static-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  layout-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/res/layout/combined_qs_header.xml
+            tools/qa/test_shade_header_compat.py
+          sparse-checkout-cone-mode: false
+      - name: Check XML layout invariants
+        run: python3 -m unittest discover -s tools/qa -p "test_shade_header_compat.py" -v
