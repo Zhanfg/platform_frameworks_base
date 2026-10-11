@@ -1,0 +1,32 @@
+name: Dual Shade Tooltip Cutout QA
+
+on:
+  push:
+    branches: ["fix/**"]
+    paths:
+      - "packages/SystemUI/compose/features/src/com/android/systemui/scene/ui/composable/DualShadeEducationalTooltips.kt"
+      - "tools/qa/test_dual_shade_tooltip_bounds.py"
+      - ".github/workflows/dual-shade-tooltip-static-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/compose/features/src/com/android/systemui/scene/ui/composable/DualShadeEducationalTooltips.kt"
+      - "tools/qa/test_dual_shade_tooltip_bounds.py"
+      - ".github/workflows/dual-shade-tooltip-static-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  tooltip-bounds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/compose/features/src/com/android/systemui/scene/ui/composable/DualShadeEducationalTooltips.kt
+            tools/qa/test_dual_shade_tooltip_bounds.py
+          sparse-checkout-cone-mode: false
+      - name: Verify education tooltip bounds
+        run: python3 -m unittest discover -s tools/qa -p "test_dual_shade_tooltip_bounds.py" -v
