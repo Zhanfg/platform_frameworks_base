@@ -146,17 +146,20 @@ public class NavigationHandle extends View implements ButtonInterface {
     private void updateHandleVisibility() {
         if (mUserTracker == null) return;
         int userId = mUserTracker.getUserId();
-        int navigationMode = Settings.Secure.getIntForUser(getContext().getContentResolver(),
-                Settings.Secure.NAVIGATION_MODE, getResources().getInteger(
-                        com.android.internal.R.integer.config_navBarInteractionMode), userId);
         int hideHandle = Settings.Secure.getIntForUser(getContext().getContentResolver(),
                 Settings.Secure.UWU_HIDE_GESTURE_HANDLE, 0, userId);
-        mHideHandle = shouldHideHandle(navigationMode, hideHandle);
+        // This View is inflated for home_handle in the gestural navigation layout.
+        // NAVIGATION_MODE is mirrored into Settings.Secure asynchronously by
+        // NavigationModeController and can be stale or missing during an overlay
+        // change. Do not let that cache veto a saved hide-handle preference.
+        // Only the painted pill is hidden; do not change view visibility or
+        // the gesture touch region / WindowInsets.
+        mHideHandle = shouldHideHandle(hideHandle);
         invalidate();
     }
 
-    static boolean shouldHideHandle(int navigationMode, int hideHandle) {
-        return navigationMode == 2 && hideHandle == 1;
+    static boolean shouldHideHandle(int hideHandle) {
+        return hideHandle == 1;
     }
 
     protected boolean isHandleHidden() {
