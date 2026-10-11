@@ -111,10 +111,11 @@ private fun AnchoredTooltip(
     val caretSize = TooltipDefaults.caretSize
     val caretSizePx = with(density) { caretSize.toSize() }
     val gapBetweenPopupAndAnchor = with(density) { 2.dp.roundToPx() }
+    val screenEdgePadding = with(density) { 8.dp.roundToPx() }
     val displayCutoutTop = WindowInsets.displayCutout.getTop(density)
     TooltipBox(
         positionProvider =
-            remember(caretSizePx, gapBetweenPopupAndAnchor, displayCutoutTop) {
+            remember(caretSizePx, gapBetweenPopupAndAnchor, screenEdgePadding, displayCutoutTop) {
                 object : PopupPositionProvider {
                     override fun calculatePosition(
                         anchorBounds: IntRect,
@@ -122,15 +123,26 @@ private fun AnchoredTooltip(
                         layoutDirection: LayoutDirection,
                         popupContentSize: IntSize,
                     ): IntOffset {
+                        // The anchor and popup coordinates are already window-relative.
+                        // Do not subtract the cutout inset: that moves the education bubble
+                        // upward behind camera cutouts on narrow devices.
+                        val preferredX =
+                            if (anchorBounds.left + popupContentSize.width < windowSize.width) {
+                                anchorBounds.left
+                            } else {
+                                anchorBounds.right - popupContentSize.width
+                            }
+                        val maxX =
+                            (windowSize.width - popupContentSize.width - screenEdgePadding)
+                                .coerceAtLeast(screenEdgePadding)
+                        val safeTop = displayCutoutTop + screenEdgePadding
+                        val maxY =
+                            (windowSize.height - popupContentSize.height - screenEdgePadding)
+                                .coerceAtLeast(safeTop)
                         return IntOffset(
-                            x =
-                                if (anchorBounds.left + popupContentSize.width < windowSize.width) {
-                                    anchorBounds.left
-                                } else {
-                                    anchorBounds.left -
-                                        (popupContentSize.width - anchorBounds.width)
-                                },
-                            y = anchorBounds.bottom - displayCutoutTop,
+                            x = preferredX.coerceIn(screenEdgePadding, maxX),
+                            y = (anchorBounds.bottom + gapBetweenPopupAndAnchor)
+                                .coerceIn(safeTop, maxY),
                         )
                     }
                 }
