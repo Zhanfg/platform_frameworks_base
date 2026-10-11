@@ -17,6 +17,15 @@ class GesturePillTest(unittest.TestCase):
     def test_async_navigation_mode_mirror_not_gating_visibility(self):
         method=self.source.split("private void updateHandleVisibility()",1)[1].split("protected boolean isHandleHidden",1)[0]
         self.assertNotIn("Settings.Secure.NAVIGATION_MODE,",method)
+    def test_stale_nav_mode_observer_removed(self):
+        self.assertNotIn("Settings.Secure.getUriFor(Settings.Secure.NAVIGATION_MODE)", self.source)
+        self.assertIn("Settings.Secure.getUriFor(Settings.Secure.UWU_HIDE_GESTURE_HANDLE)", self.source)
+
+    def test_quickswitch_rotation_handle_honors_hidden_flag(self):
+        path=ROOT/"packages/SystemUI/src/com/android/systemui/navigationbar/gestural/QuickswitchOrientedNavHandle.java"
+        code=path.read_text(encoding="utf-8")
+        self.assertIn("if (isHandleHidden()) return;", code)
+
     def test_gesture_touch_target_kept(self):
         self.assertIn("if (isHandleHidden()) return;",self.source)
         self.assertNotIn("setVisibility(GONE)",self.source)
