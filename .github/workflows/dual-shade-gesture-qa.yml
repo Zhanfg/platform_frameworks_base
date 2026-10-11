@@ -1,0 +1,32 @@
+name: Dual Shade Gesture Static QA
+
+on:
+  push:
+    branches: ["tune/**"]
+    paths:
+      - "packages/SystemUI/res/values/shade_config.xml"
+      - "tools/qa/test_dual_shade_gesture.py"
+      - ".github/workflows/dual-shade-gesture-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/res/values/shade_config.xml"
+      - "tools/qa/test_dual_shade_gesture.py"
+      - ".github/workflows/dual-shade-gesture-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  dual-shade-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/res/values/shade_config.xml
+            tools/qa/test_dual_shade_gesture.py
+          sparse-checkout-cone-mode: false
+      - name: Validate compact Dual Shade gesture split
+        run: python3 -m unittest discover -s tools/qa -p "test_dual_shade_gesture.py" -v
