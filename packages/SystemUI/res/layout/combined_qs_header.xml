@@ -28,8 +28,8 @@ frame when animating QS <-> QQS transition
     android:minHeight="@dimen/large_screen_shade_header_min_height"
     android:clickable="false"
     android:focusable="true"
-    android:paddingLeft="@dimen/qs_panel_padding"
-    android:paddingRight="@dimen/qs_panel_padding"
+    android:paddingStart="@dimen/qs_panel_padding"
+    android:paddingEnd="@dimen/qs_panel_padding"
     android:visibility="gone"
     android:theme="@style/Theme.SystemUI.QuickSettings.Header"
     app:layoutDescription="@xml/combined_qs_header_scene">
@@ -101,6 +101,7 @@ frame when animating QS <-> QQS transition
         android:singleLine="true"
         android:textDirection="locale"
         android:textAppearance="@style/TextAppearance.QS.Status"
+        android:ellipsize="end"
         app:longDatePattern="@string/abbrev_wday_month_day_no_year_alarm"
         app:shortDatePattern="@string/abbrev_month_day_no_year"
     />

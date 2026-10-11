@@ -1,0 +1,29 @@
+name: OP6 MD3E QS TalkBack localization
+on:
+  push:
+    branches: ["integration/op6-uwu17-md3e-systemui-ksu"]
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/qs/panels/ui/compose/TileDetails.kt"
+      - "packages/SystemUI/res/values*/uwu_hotfix_accessibility.xml"
+      - "tools/qa/test_op6_qs_accessibility.py"
+  pull_request:
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/qs/panels/ui/compose/TileDetails.kt"
+      - "packages/SystemUI/res/values*/uwu_hotfix_accessibility.xml"
+      - "tools/qa/test_op6_qs_accessibility.py"
+permissions:
+  contents: read
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/src/com/android/systemui/qs/panels/ui/compose/TileDetails.kt
+            packages/SystemUI/res/values/uwu_hotfix_accessibility.xml
+            packages/SystemUI/res/values-zh-rCN/uwu_hotfix_accessibility.xml
+            tools/qa/test_op6_qs_accessibility.py
+          sparse-checkout-cone-mode: false
+      - run: python3 -m unittest discover -s tools/qa -p test_op6_qs_accessibility.py -v

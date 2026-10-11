@@ -29,6 +29,7 @@ import android.icu.lang.UCharacter;
 import android.icu.text.DateTimePatternGenerator;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.os.UserHandle;
@@ -40,6 +41,7 @@ import android.text.style.CharacterStyle;
 import android.text.style.RelativeSizeSpan;
 import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
+import android.view.View;
 import android.view.Display;
 import android.widget.TextView;
 
@@ -94,7 +96,9 @@ public class Clock extends TextView implements
     private static final int AM_PM_STYLE_GONE    = 2;
 
     private final int mAmPmStyle;
-    private boolean mShowSeconds;
+    // Default to visible seconds without a background daemon or wake lock.
+    // Existing explicit tuner values still take precedence.
+    private boolean mShowSeconds = true;
     private Handler mSecondsHandler;
 
     // Tracks config changes that will make the clock change dimensions
@@ -165,7 +169,7 @@ public class Clock extends TextView implements
         if (bundle.containsKey(CURRENT_USER_ID)) {
             mCurrentUserId = bundle.getInt(CURRENT_USER_ID);
         }
-        mShowSeconds = bundle.getBoolean(SHOW_SECONDS, false);
+        mShowSeconds = bundle.getBoolean(SHOW_SECONDS, true);
         if (bundle.containsKey(VISIBILITY)) {
             super.setVisibility(bundle.getInt(VISIBILITY));
         }
@@ -276,7 +280,7 @@ public class Clock extends TextView implements
     @Override
     public void onTuningChanged(String key, String newValue) {
         if (CLOCK_SECONDS.equals(key)) {
-            mShowSeconds = TunerService.parseIntegerSwitch(newValue, false);
+            mShowSeconds = TunerService.parseIntegerSwitch(newValue, true);
             updateShowSeconds();
         }
     }
@@ -337,28 +341,40 @@ public class Clock extends TextView implements
 
     private void updateShowSeconds() {
         if (mShowSeconds) {
-            // Wait until we have a display to start trying to show seconds.
-            if (mSecondsHandler == null && getDisplay() != null) {
-                mSecondsHandler = new Handler();
-                if (getDisplay().getState() == Display.STATE_ON) {
-                    mSecondsHandler.postAtTime(mSecondTick,
-                            SystemClock.uptimeMillis() / 1000 * 1000 + 1000);
-                }
+            // One main-thread callback is enough. Nothing continues ticking if
+            // the screen is off, the clock is not shown, or it is detached.
+            if (mSecondsHandler == null && getDisplay() != null && mAttached) {
+                mSecondsHandler = new Handler(Looper.getMainLooper());
                 mScreenReceiverRegistered = true;
                 IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
                 filter.addAction(Intent.ACTION_SCREEN_ON);
                 mBroadcastDispatcher.registerReceiver(mScreenReceiver, filter);
             }
+            scheduleSecondTick();
             setFontFeatureSettings("tnum");
         } else {
             if (mSecondsHandler != null) {
-                mScreenReceiverRegistered = false;
-                mBroadcastDispatcher.unregisterReceiver(mScreenReceiver);
+                if (mScreenReceiverRegistered) {
+                    mScreenReceiverRegistered = false;
+                    mBroadcastDispatcher.unregisterReceiver(mScreenReceiver);
+                }
                 mSecondsHandler.removeCallbacks(mSecondTick);
                 mSecondsHandler = null;
                 updateClock();
             }
             setFontFeatureSettings(null);
+        }
+    }
+
+    // Scheduling is aligned to the next whole second; callbacks never
+    // accumulate, and don't keep the display awake just to update a clock.
+    private void scheduleSecondTick() {
+        final Handler handler = mSecondsHandler;
+        if (handler == null) return;
+        handler.removeCallbacks(mSecondTick);
+        if (mAttached && mShowSeconds && isShown() && getDisplay() != null
+                && getDisplay().getState() == Display.STATE_ON) {
+            handler.postAtTime(mSecondTick, SystemClock.uptimeMillis() / 1000 * 1000 + 1000);
         }
     }
 
@@ -478,27 +494,33 @@ public class Clock extends TextView implements
     private final BroadcastReceiver mScreenReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if (Intent.ACTION_SCREEN_OFF.equals(action)) {
-                if (mSecondsHandler != null) {
-                    mSecondsHandler.removeCallbacks(mSecondTick);
-                }
-            } else if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                if (mSecondsHandler != null) {
-                    mSecondsHandler.postAtTime(mSecondTick,
-                            SystemClock.uptimeMillis() / 1000 * 1000 + 1000);
-                }
+            if (Intent.ACTION_SCREEN_OFF.equals(intent.getAction())
+                    || Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+                scheduleSecondTick();
             }
         }
     };
 
+    @Override
+    protected void onVisibilityChanged(View changedView, int visibility) {
+        super.onVisibilityChanged(changedView, visibility);
+        scheduleSecondTick();
+    }
+
     private final Runnable mSecondTick = new Runnable() {
         @Override
         public void run() {
+            // Detached/hidden clocks must never dereference a cleared handler
+            // or perpetually reschedule work while the view is not visible.
+            if (mSecondsHandler == null || !mAttached || !mShowSeconds
+                    || !isShown() || getDisplay() == null
+                    || getDisplay().getState() != Display.STATE_ON) {
+                return;
+            }
             if (mCalendar != null) {
                 updateClock();
             }
-            mSecondsHandler.postAtTime(this, SystemClock.uptimeMillis() / 1000 * 1000 + 1000);
+            scheduleSecondTick();
         }
     };
 }

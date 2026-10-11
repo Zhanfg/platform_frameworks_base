@@ -49,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -170,7 +171,7 @@ fun TileDetails(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             // Description is TBD
-                            contentDescription = "Back to QS panel",
+                            contentDescription = stringResource(R.string.uwu_qs_details_back_accessibility),
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
@@ -199,7 +200,7 @@ fun TileDetails(
                         Icon(
                             imageVector = Icons.Default.Settings,
                             // Description is TBD
-                            contentDescription = "Go to Settings",
+                            contentDescription = stringResource(R.string.uwu_qs_details_settings_accessibility),
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
