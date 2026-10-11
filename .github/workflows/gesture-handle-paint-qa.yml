@@ -5,12 +5,14 @@ on:
     paths:
       - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java"
       - "packages/SystemUI/res/layout/home_handle.xml"
+      - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/QuickswitchOrientedNavHandle.java"
       - "tools/qa/test_gesture_handle_paint.py"
       - ".github/workflows/gesture-handle-paint-qa.yml"
   pull_request:
     paths:
       - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java"
       - "packages/SystemUI/res/layout/home_handle.xml"
+      - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/QuickswitchOrientedNavHandle.java"
       - "tools/qa/test_gesture_handle_paint.py"
       - ".github/workflows/gesture-handle-paint-qa.yml"
 permissions:
@@ -26,6 +28,7 @@ jobs:
           sparse-checkout: |
             packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java
             packages/SystemUI/res/layout/home_handle.xml
+            packages/SystemUI/src/com/android/systemui/navigationbar/gestural/QuickswitchOrientedNavHandle.java
             tools/qa/test_gesture_handle_paint.py
           sparse-checkout-cone-mode: false
       - run: python3 -m unittest discover -s tools/qa -p test_gesture_handle_paint.py -v
