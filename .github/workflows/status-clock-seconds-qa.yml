@@ -1,0 +1,29 @@
+name: Status Clock Seconds Lifecycle QA
+on:
+  push:
+    branches: ["fix/**"]
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/statusbar/policy/Clock.java"
+      - "tools/qa/test_status_clock_seconds.py"
+      - ".github/workflows/status-clock-seconds-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/statusbar/policy/Clock.java"
+      - "tools/qa/test_status_clock_seconds.py"
+      - ".github/workflows/status-clock-seconds-qa.yml"
+permissions:
+  contents: read
+jobs:
+  source-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/src/com/android/systemui/statusbar/policy/Clock.java
+            tools/qa/test_status_clock_seconds.py
+          sparse-checkout-cone-mode: false
+      - name: Validate seconds scheduling and cleanup invariants
+        run: python3 -m unittest discover -s tools/qa -p test_status_clock_seconds.py -v
