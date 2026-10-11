@@ -1,0 +1,32 @@
+name: SystemUI Compact Header QA
+
+on:
+  push:
+    branches: ["fix/**"]
+    paths:
+      - "packages/SystemUI/compose/features/src/com/android/systemui/shade/ui/composable/ShadeHeader.kt"
+      - "tools/qa/test_compact_shade_header.py"
+      - ".github/workflows/systemui-compact-header-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/compose/features/src/com/android/systemui/shade/ui/composable/ShadeHeader.kt"
+      - "tools/qa/test_compact_shade_header.py"
+      - ".github/workflows/systemui-compact-header-qa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  source-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/compose/features/src/com/android/systemui/shade/ui/composable/ShadeHeader.kt
+            tools/qa/test_compact_shade_header.py
+          sparse-checkout-cone-mode: false
+      - name: Validate compact SystemUI header logic
+        run: python3 -m unittest discover -s tools/qa -p "test_compact_shade_header.py" -v
