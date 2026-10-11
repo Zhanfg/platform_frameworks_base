@@ -310,6 +310,17 @@ fun ContentScope.ExpandedShadeHeader(
 ) {
     val useExpandedFormat by remember { derivedStateOf { shouldUseExpandedFormat(layoutState) } }
 
+    // Physical DPI alone does not describe the available layout width.
+    // On compact dp widths the 2.57x clock can draw over nearby content because
+    // graphics-layer scaling does not increase its measured width.
+    val displayConfig = LocalConfiguration.current
+    val expandedClockScale =
+        (when {
+            displayConfig.screenWidthDp < 360 -> 1.85f
+            displayConfig.screenWidthDp < 400 -> 2.15f
+            else -> 2.57f
+        } / maxOf(1f, displayConfig.fontScale)).coerceAtLeast(1.4f)
+
     val textColor = ShadeHeader.Colors.textColor
 
     Box(modifier = modifier.sysuiResTag(ShadeHeader.TestTags.Root)) {
@@ -335,7 +346,7 @@ fun ContentScope.ExpandedShadeHeader(
             Box(modifier = Modifier.fillMaxWidth()) {
                 Clock(
                     onClick = viewModel::onClockClicked,
-                    scale = 2.57f,
+                    scale = expandedClockScale,
                     textColor = textColor,
                     modifier =
                         Modifier.sysuiResTag("expanded_header_clock")
@@ -525,7 +536,10 @@ fun QuickSettingsOverlayHeader(viewModel: ShadeHeaderViewModel, modifier: Modifi
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.fillMaxWidth(),
     ) {
-        ShadeCarrierGroup(viewModel = viewModel)
+        // Reserve a separate measured region for the battery estimate on
+        // compact and large-font configurations.
+        ShadeCarrierGroup(viewModel = viewModel, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(8.dp))
         BatteryInfo(viewModel = viewModel, showIcon = false, useExpandedFormat = true)
     }
 }
