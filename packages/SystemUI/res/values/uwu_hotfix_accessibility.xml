@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TalkBack label for returning from a Quick Settings detail panel. -->
+    <string name="uwu_qs_details_back_accessibility">Back to Quick Settings</string>
+    <!-- TalkBack label for opening the corresponding full Settings page. -->
+    <string name="uwu_qs_details_settings_accessibility">Open Settings</string>
+</resources>
