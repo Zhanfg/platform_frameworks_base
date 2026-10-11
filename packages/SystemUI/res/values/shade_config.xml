@@ -54,5 +54,7 @@
      - Swiping from the start edge to this boundary opens Notifications.
      - Swiping from this boundary to the end edge opens Quick Settings.
     -->
-    <item name="config_invocationGestureSplitRatio" format="float" type="dimen">0.75</item>
+    <!-- Keep both entry gestures usable on narrow phones: notifications use about
+         two-thirds of the width, Quick Settings gets the remaining third. -->
+    <item name="config_invocationGestureSplitRatio" format="float" type="dimen">0.67</item>
 </resources>
