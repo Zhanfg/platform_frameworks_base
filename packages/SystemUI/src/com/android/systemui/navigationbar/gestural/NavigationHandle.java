@@ -120,9 +120,9 @@ public class NavigationHandle extends View implements ButtonInterface {
         getContext().getContentResolver().registerContentObserver(
                 Settings.Secure.getUriFor(Settings.Secure.UWU_HIDE_GESTURE_HANDLE),
                 false, mHandleSettingsObserver, UserHandle.USER_ALL);
-        getContext().getContentResolver().registerContentObserver(
-                Settings.Secure.getUriFor(Settings.Secure.NAVIGATION_MODE),
-                false, mHandleSettingsObserver, UserHandle.USER_ALL);
+        // NAVIGATION_MODE is an asynchronous mirror, not the actual overlay
+        // choice. This view exists only inside the gestural layout; observing
+        // the mirror can cause unnecessary redraws during mode transitions.
         mUserTracker.addCallback(mUserChangedCallback, getContext().getMainExecutor());
         updateHandleVisibility();
     }
