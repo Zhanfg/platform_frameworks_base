@@ -13,6 +13,7 @@ import android.database.ContentObserver
 import android.os.Handler
 import android.os.UserHandle
 import android.provider.Settings
+import android.util.Log
 import com.android.systemui.CoreStartable
 import com.android.systemui.broadcast.BroadcastDispatcher
 import com.android.systemui.dagger.SysUISingleton
@@ -37,14 +38,15 @@ constructor(
     private val settingsObserver =
         object : ContentObserver(mainHandler) {
             override fun onChange(selfChange: Boolean) {
-                if (!controller.isMomentArcEnabled()) controller.hide()
+                controller.refreshEnabledState()
             }
         }
 
     private val gestureReceiver =
         object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                when (intent.action) {
+                try {
+                    when (intent.action) {
                     ACTION_SHOW ->
                         controller.show(
                             isLeft = intent.getBooleanExtra(EXTRA_IS_LEFT, true),
@@ -59,6 +61,13 @@ constructor(
                             isCancelled = intent.getBooleanExtra(EXTRA_IS_CANCELLED, false),
                         )
                     ACTION_DISMISS -> controller.hide()
+                    }
+                } catch (e: RuntimeException) {
+                    // Gesture broadcasts run on SystemUI's main executor.
+                    // Contain transient vendor/Binder failures inside the
+                    // optional menu rather than crashing the status bar.
+                    Log.e(TAG, "MomentArc gesture dispatch failed", e)
+                    controller.hide()
                 }
             }
         }
@@ -72,7 +81,10 @@ constructor(
         object : UserTracker.Callback {
             override fun onBeforeUserSwitching(newUser: Int) = controller.hide()
 
-            override fun onUserChanged(newUser: Int, userContext: Context) = controller.hide()
+            override fun onUserChanged(newUser: Int, userContext: Context) {
+                controller.hide()
+                controller.refreshEnabledState()
+            }
         }
 
     private val wakefulnessObserver =
@@ -83,6 +95,9 @@ constructor(
         }
 
     override fun start() {
+        // Populate the state once before routing high-frequency swipe updates;
+        // observers refresh it only on actual setting/user changes.
+        controller.refreshEnabledState()
         broadcastDispatcher.registerReceiver(
             gestureReceiver,
             IntentFilter().apply {
@@ -116,6 +131,7 @@ constructor(
     }
 
     private companion object {
+        const val TAG = "MomentArcStartable"
         const val ACTION_SHOW = "com.android.systemui.action.SHOW_MOMENT_ARC"
         const val ACTION_UPDATE = "com.android.systemui.action.UPDATE_MOMENT_ARC_TOUCH"
         const val ACTION_DISMISS = "com.android.systemui.action.DISMISS_MOMENT_ARC"
