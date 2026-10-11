@@ -1,0 +1,31 @@
+name: SystemUI Gesture Handle Source QA
+on:
+  push:
+    branches: ["fix/**"]
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java"
+      - "packages/SystemUI/res/layout/home_handle.xml"
+      - "tools/qa/test_gesture_handle_paint.py"
+      - ".github/workflows/gesture-handle-paint-qa.yml"
+  pull_request:
+    paths:
+      - "packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java"
+      - "packages/SystemUI/res/layout/home_handle.xml"
+      - "tools/qa/test_gesture_handle_paint.py"
+      - ".github/workflows/gesture-handle-paint-qa.yml"
+permissions:
+  contents: read
+jobs:
+  source-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          filter: blob:none
+          sparse-checkout: |
+            packages/SystemUI/src/com/android/systemui/navigationbar/gestural/NavigationHandle.java
+            packages/SystemUI/res/layout/home_handle.xml
+            tools/qa/test_gesture_handle_paint.py
+          sparse-checkout-cone-mode: false
+      - run: python3 -m unittest discover -s tools/qa -p test_gesture_handle_paint.py -v
